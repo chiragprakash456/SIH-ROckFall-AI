@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>R.O.C.K.S. - Rockfall Prediction Dashboard</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
+    @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css');
+
+    :root{
+      --bg-dark:#1a202c; --bg-medium:#2d3748; --bg-light:#4a5568;
+      --text-primary:#e2e8f0; --text-secondary:#a0aec0;
+      --accent-blue:#3182ce; --risk-green:#38a169; --risk-yellow:#d69e2e; --risk-red:#c53030;
+      --accent-green:#48bb78; --accent-purple:#9f7aea;
+    }
+    body.light-theme {
+      --bg-dark: #f0f2f5; --bg-medium:#fff; --bg-light:#e2e8f0; --text-primary:#2d3748; --text-secondary:#4a5568;
+    }
+
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    body{ font-family:'Roboto',sans-serif; background:var(--bg-dark); color:var(--text-primary);
+      display:flex; height:100vh; overflow:hidden; transition:background-color .3s, color .3s;
+    }
+
+    /* PRELOADER (logo + text only) */
+    #preloader{
+      position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+      z-index:9999; background:rgba(26,32,44,0.85); transition:opacity .5s, visibility .5s; overflow:hidden;
+    }
+    #preloader.hidden{ opacity:0; visibility:hidden; }
+    #preloader img{ width:250px; height:auto; animation:pulse 1.5s infinite; margin-bottom:18px; }
+    #preloader .loading-text{ color:var(--text-secondary); font-size:1.1rem; }
+    @keyframes pulse{ 0%{transform:scale(1);opacity:.8}50%{transform:scale(1.05);opacity:1}100%{transform:scale(1);opacity:.8} }
+
+    /* LAYOUT */
+    .container{ display:flex; width:100%; opacity:0; visibility:hidden; transition:opacity .5s; flex-grow:1; height:100vh; }
+    .container.visible{ opacity:1; visibility:visible; }
+
+    .sidebar{ width:240px; background:var(--bg-medium); padding:18px; display:flex; flex-direction:column; gap:8px; border-right:1px solid var(--bg-light); }
+    .sidebar .logo { margin-bottom:12px; }
+    .sidebar .logo img { width:160px; display:block; }
+    .sidebar nav a{ display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--text-secondary); padding:12px; border-radius:8px; font-weight:500; }
+    .sidebar nav a i{ width:20px; text-align:center; }
+    .sidebar nav a.active, .sidebar nav a:hover{ background:var(--accent-blue); color:var(--text-primary); transform: translateX(4px); transition:all .18s; }
+    .sidebar nav a[aria-current="page"]{ outline:2px solid rgba(255,255,255,.06); }
+
+    .main-content{ flex-grow:1; padding:22px; display:flex; flex-direction:column; overflow-y:auto; }
+    .main-header{ font-size:2rem; font-weight:300; margin-bottom:14px; }
+
+    /* page content */
+    .page-content{ display:none; flex-direction:column; flex-grow:1; opacity:0; transform:translateY(10px); transition:opacity .35s, transform .35s; }
+    .page-content.active-page{ display:flex; opacity:1; transform:translateY(0); }
+
+    .map-container{ flex-grow:1; background:var(--bg-medium); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:2rem; color:var(--text-secondary); background-image:url('https://i.imgur.com/gKj8A4C.png'); background-size:cover; background-position:center; padding:20px; }
+
+    /* alerts */
+    .alerts-list{ display:flex; flex-direction:column; gap:12px; }
+    .alert-card{ background:var(--bg-light); padding:14px; border-radius:8px; border-left:5px solid; }
+    .alert-card.high{ border-color:var(--risk-red); }
+    .alert-card.medium{ border-color:var(--risk-yellow); }
+    .alert-card.low{ border-color:var(--risk-green); }
+
+    /* info panel on right (live alerts) */
+    .info-panel{ width:320px; background:var(--bg-medium); padding:18px; border-left:1px solid var(--bg-light); overflow:auto; }
+    .info-panel h3{ font-weight:700; margin-bottom:14px; }
+
+    /* settings styles kept same (inputs etc.) */
+    .settings-container{ background:var(--bg-medium); border-radius:12px; padding:22px; }
+    .setting-group{ margin-bottom:20px; padding-bottom:14px; border-bottom:1px solid var(--bg-light); }
+    .setting-item{ display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+    .switch{ position:relative; display:inline-block; width:40px; height:24px; }
+    .switch input{ opacity:0; width:0; height:0; }
+    .slider{ position:absolute; inset:0; background:var(--bg-light); border-radius:24px; transition:.4s; }
+    .slider:before{ content:""; position:absolute; left:4px; bottom:4px; height:16px; width:16px; background:white; border-radius:50%; transition:.4s; }
+    input:checked + .slider{ background:var(--accent-blue); }
+    input:checked + .slider:before{ transform: translateX(16px); }
+
+    /* small screens */
+    @media(max-width:900px){
+      .sidebar{ width:72px; padding:12px; }
+      .sidebar .logo img{ width:52px; }
+      .info-panel{ display:none; }
+    }
+  </style>
+</head>
+<body>
+  <!-- PRELOADER: keep only logo + text -->
+  <div id="preloader">
+    <img src="logo.jpg" alt="ROCKFALL logo">
+    <div class="loading-text">Loading R.O.C.K.S. System...</div>
+  </div>
+
+  <!-- MAIN LAYOUT -->
+  <div class="container" id="main-dashboard-container">
+    <!-- Sidebar with fixed logo image (top-left) -->
+    <aside class="sidebar">
+      <div class="logo"><a href="index.html"><img src="logo.jpg" alt="ROCKFALL logo"></a></div>
+      <nav>
+        <a href="#" class="nav-link" data-page="dashboard" aria-current="false"><i class="fas fa-chart-line"></i><span>Dashboard</span></a>
+        <a href="#" class="nav-link" data-page="analytics" aria-current="false"><i class="fas fa-chart-area"></i><span>Analytics</span></a>
+        <a href="#" class="nav-link" data-page="reports" aria-current="false"><i class="fas fa-file-alt"></i><span>Reports</span></a>
+        <a href="#" class="nav-link" data-page="settings" aria-current="false"><i class="fas fa-cog"></i><span>Settings</span></a>
+        <a href="#" class="nav-link" data-page="alerts" aria-current="false"><i class="fas fa-bell"></i><span>Alerts</span></a>
+      </nav>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main-content">
+      <!-- Dashboard page -->
+      <div id="dashboard-content" class="page-content">
+        <h1 class="main-header">Mine Stability Dashboard</h1>
+        <div class="map-container"><p>[ Interactive Risk Map ]</p></div>
+      </div>
+
+      <!-- Analytics -->
+      <div id="analytics-content" class="page-content">
+        <h1 class="main-header">Analytics & Trends</h1>
+        <div class="settings-container"><p style="color:var(--text-secondary)">Advanced analytics and trends go here.</p></div>
+      </div>
+
+      <!-- Reports -->
+      <div id="reports-content" class="page-content">
+        <h1 class="main-header">Generated Reports</h1>
+        <div class="settings-container"><p style="color:var(--text-secondary)">Report generation UI goes here.</p></div>
+      </div>
+
+      <!-- Settings (same functionality) -->
+      <div id="settings-content" class="page-content">
+        <h1 class="main-header">System Settings</h1>
+        <div class="settings-container">
+          <div class="setting-group">
+            <label style="font-weight:700; display:block; margin-bottom:8px;">Theme Customization</label>
+            <div class="setting-item"><span style="min-width:120px;color:var(--text-secondary)">Dark Mode</span>
+              <label class="switch">
+                <input type="checkbox" id="darkModeToggle" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="setting-item"><span style="min-width:120px;color:var(--text-secondary)">Accent Color</span>
+              <div style="display:flex;gap:8px;"><div class="color-option blue selected" data-color="blue" style="width:26px;height:26px;border-radius:50%;background:var(--accent-blue);border:2px solid transparent;cursor:pointer"></div>
+                <div class="color-option green" data-color="green" style="width:26px;height:26px;border-radius:50%;background:var(--accent-green);cursor:pointer"></div>
+                <div class="color-option purple" data-color="purple" style="width:26px;height:26px;border-radius:50%;background:var(--accent-purple);cursor:pointer"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="setting-group">
+            <label style="font-weight:700; display:block; margin-bottom:8px;">Language</label>
+            <div class="setting-item"><span style="min-width:120px;color:var(--text-secondary)">Select Language</span>
+              <select id="languageSelect"><option value="en">English</option><option value="es">Español</option></select>
+            </div>
+          </div>
+
+          <div class="setting-group">
+            <label style="font-weight:700; display:block; margin-bottom:8px;">Notifications</label>
+            <div class="setting-item"><span style="min-width:120px;color:var(--text-secondary)">SMS Alerts</span>
+              <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+            </div>
+            <div class="setting-item"><span style="min-width:120px;color:var(--text-secondary)">Email Alerts</span>
+              <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+            </div>
+            <div class="setting-item"><span style="min-width:120px;color:var(--text-secondary)">Alert Threshold (%)</span>
+              <input type="number" value="70" min="0" max="100" style="padding:6px 8px;border-radius:6px;background:var(--bg-dark);color:var(--text-primary);border:1px solid var(--bg-light);">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alerts page (opened when hash=alerts) -->
+      <div id="alerts-content" class="page-content">
+        <h1 class="main-header">Live Alerts</h1>
+        <div class="settings-container">
+          <div class="alerts-list">
+            <div class="alert-card high"><strong>Sector B-4</strong> — High Risk (85%) — Increased displacement detected. Evacuate personnel.</div>
+            <div class="alert-card medium"><strong>Sector C-1</strong> — Medium Risk (62%) — Heavy rainfall recorded. Monitor sensors.</div>
+            <div class="alert-card low"><strong>Sector A-2</strong> — Stable (15%) — All systems normal.</div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- right side info panel (keeps live alerts summary) -->
+    <aside class="info-panel">
+      <h3>Live Alerts</h3>
+      <div class="alert-card high"><div style="display:flex;justify-content:space-between"><strong>Sector B-4</strong><span>85%</span></div><p style="color:var(--text-secondary);margin-top:6px">Increased displacement detected. Evacuate personnel.</p></div>
+      <div class="alert-card medium"><div style="display:flex;justify-content:space-between"><strong>Sector C-1</strong><span>62%</span></div><p style="color:var(--text-secondary);margin-top:6px">Heavy rainfall recorded. Monitor sensor data closely.</p></div>
+      <div class="alert-card low"><div style="display:flex;justify-content:space-between"><strong>Sector A-2</strong><span>15%</span></div><p style="color:var(--text-secondary);margin-top:6px">All systems normal. No action required.</p></div>
+    </aside>
+  </div>
+
+  <script>
+    // -------------------------
+    // Dashboard interactivity
+    // -------------------------
+    document.addEventListener('DOMContentLoaded', () => {
+      const preloader = document.getElementById('preloader');
+      const mainContainer = document.getElementById('main-dashboard-container');
+      const navLinks = Array.from(document.querySelectorAll('.nav-link'));
+      const pageContents = Array.from(document.querySelectorAll('.page-content'));
+      const body = document.body;
+      const darkModeToggle = document.getElementById('darkModeToggle');
+      const accentColorOptions = Array.from(document.querySelectorAll('.color-option'));
+
+      // helper: show page by name (dashboard, analytics, reports, settings, alerts)
+      function showPage(pageName){
+        navLinks.forEach(nav => {
+          const isActive = nav.getAttribute('data-page') === pageName;
+          nav.classList.toggle('active', isActive);
+          nav.setAttribute('aria-current', isActive ? 'page' : 'false');
+        });
+        pageContents.forEach(pc => {
+          pc.classList.toggle('active-page', pc.id === pageName + '-content');
+        });
+      }
+
+      // click handlers for sidebar nav
+      navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const page = link.getAttribute('data-page');
+          // if already active, still update hash
+          if (window.location.hash.substring(1) !== page) {
+            window.location.hash = page;
+          }
+          showPage(page);
+        });
+      });
+
+      // show preloader until window load completes, then reveal UI and navigate to hash (if any)
+      window.addEventListener('load', () => {
+        // keep preloader visible at least a short while for UX
+        setTimeout(()=> {
+          preloader.classList.add('hidden');
+          preloader.addEventListener('transitionend', () => {
+            preloader.style.display = 'none';
+            mainContainer.classList.add('visible');
+            // after showing main, navigate to hash or default
+            handleHashNavigation();
+          }, { once: true });
+        }, 650);
+      });
+
+      // If user navigates to dashboard.html#alerts (or any hash), open that page when UI is ready
+      function handleHashNavigation(){
+        const hash = window.location.hash.substring(1);
+        const target = hash || 'dashboard';
+        const targetLink = document.querySelector(`.nav-link[data-page="${target}"]`);
+        if (targetLink) {
+          targetLink.click();
+        } else {
+          // fallback to dashboard
+          document.querySelector('.nav-link[data-page="dashboard"]').click();
+        }
+      }
+
+      // Also handle manual hashchange while in the page
+      window.addEventListener('hashchange', handleHashNavigation);
+
+      // -------------------------
+      // Theme & accent (kept same functionality)
+      // -------------------------
+      const applyTheme = (theme) => {
+        body.classList.toggle('light-theme', theme === 'light');
+        if (darkModeToggle) darkModeToggle.checked = theme === 'dark';
+      };
+      const applyAccentColor = (color) => {
+        // original behavior: replace --accent-blue variable with chosen accent
+        document.documentElement.style.setProperty('--accent-blue', `var(--accent-${color})`);
+        accentColorOptions.forEach(opt => opt.classList.remove('selected'));
+        const chosen = document.querySelector(`.color-option[data-color="${color}"]`);
+        if (chosen) chosen.classList.add('selected');
+      };
+
+      // toggles
+      if (darkModeToggle) {
+        darkModeToggle.addEventListener('change', () => {
+          const newTheme = darkModeToggle.checked ? 'dark' : 'light';
+          localStorage.setItem('theme', newTheme);
+          applyTheme(newTheme);
+        });
+      }
+
+      accentColorOptions.forEach(option => {
+        option.addEventListener('click', () => {
+          const newColor = option.getAttribute('data-color');
+          localStorage.setItem('accentColor', newColor);
+          applyAccentColor(newColor);
+        });
+      });
+
+      // load saved preferences (if any)
+      const savedTheme = localStorage.getItem('theme') || 'dark';
+      const savedAccent = localStorage.getItem('accentColor') || 'blue';
+      applyTheme(savedTheme);
+      applyAccentColor(savedAccent);
+    });
+  </script>
+</body>
+</html>
