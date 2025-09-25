@@ -11,143 +11,6 @@
     body { overflow:hidden; color:#fff; background:#000; }
 
     /* video background */
-   #bg-video {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover; /* Ensures video covers entire screen without stretching */
-  z-index: -2;
-}
-
-    .overlay {
-      position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:-1;
-    }
-
-    /* logo top-left */
-    .top-left-logo {
-      position:fixed; top:14px; left:18px; z-index:2;
-    }
-    .top-left-logo img { height:78px; display:block; }
-
-    /* navbar center top */
-    /* navbar container */
-.navbar {
-  position: fixed;
-  top: 20px;                 /* margin space from top */
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2;
-  display: flex;
-  gap: 28px;
-  align-items: center;
-}
-
-/* navbar links */
-.navbar a {
-  position: relative;
-  color: #fff;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 1rem;
-  padding: 6px 8px;
-}
-
-/* underline block (absolute, won’t affect layout) */
-.navbar a::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: -4px;              /* keeps underline below text */
-  width: 0%;
-  height: 3px;
-  background: #31debe;
-  transition: width 0.3s ease-in-out;
-}
-
-/* hover animation */
-.navbar a:hover::after {
-  width: 100%;
-}
-
-
-    /* big center title */
-    .center-title {
-      position: absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-      z-index:2; text-align:center;
-      font-size: clamp(28px, 4.5vw, 54px); font-weight:800; letter-spacing:0.6px;
-    }
-
-    /* Live Alerts swipe button - right edge vertical */
-    .live-alerts-btn {
-      position:fixed; right:0; top:50%; transform:translateY(-50%) translateX(100%);
-      z-index:3; background:#c53030; color:#fff; padding:14px 12px;
-      border-radius:10px 0 0 10px; font-weight:700; cursor:pointer;
-      writing-mode:vertical-rl; text-orientation:upright;
-      transition: transform 0.5s cubic-bezier(.22,.9,.35,1);
-      box-shadow: 0 10px 20px rgba(0,0,0,0.35);
-    }
-    .live-alerts-btn.visible { transform:translateY(-50%) translateX(0); }
-
-    /* small responsive tweaks */
-    @media (max-width:600px){
-      .navbar { gap:14px; top:12px; }
-      .top-left-logo img { height:40px; }
-      .live-alerts-btn { padding:10px; }
-    }
-  </style>
-</head>
-<body>
-  <!-- background video (muted so autoplay works) -->
-  <video id="bg-video" autoplay muted loop playsinline>
-    <source src="vid.mp4" type="video/mp4" />
-    <!-- If you prefer webm, add a fallback: <source src="vid.webm" type="video/webm" /> -->
-  </video>
-  <div class="overlay"></div>
-
-  <!-- fixed logo on top-left (links to the landing page) -->
-  <div class="top-left-logo">
-    <a href="index.html"><img src="logo.jpg" alt="ROCKFALL logo"></a>
-  </div>
-
-  <!-- navbar centered top -->
-  <nav class="navbar">
-    <a href="dashboard.html#dashboard">Dashboard</a>
-    <a href="dashboard.html#analytics">Analytics</a>
-    <a href="dashboard.html#reports">Reports</a>
-    <a href="dashboard.html#settings">Settings</a>
-  </nav>
-
-  <!-- main heading -->
-  <div class="center-title">AI Based Rockfall Prediction</div>
-
-  <!-- live alerts swipe button (opens dashboard alerts) -->
-  <div class="live-alerts-btn" id="liveAlertsBtn" onclick="location.href='dashboard.html#alerts'">Live Alerts</div>
-
-  <script>
-    // slide-in animation for the vertical button after short delay
-    window.addEventListener('DOMContentLoaded', () => {
-      setTimeout(()=> {
-        document.getElementById('liveAlertsBtn').classList.add('visible');
-      }, 600);
-    });
-  </script>
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>AI Based Rockfall Prediction</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
-
-    html,body { height:100%; margin:0; font-family: 'Roboto', sans-serif; }
-    body { overflow:hidden; color:#fff; background:#000; }
-
-    /* video background */
     #bg-video {
       position:fixed; inset:0; width:100%; height:100%;
       object-fit:cover; z-index:-2;
@@ -170,8 +33,20 @@
     .navbar a {
       color:#fff; text-decoration:none; font-weight:600; font-size:1rem;
       padding:6px 8px; border-radius:6px;
+      position: relative;
     }
-    .navbar a:hover { color:#cfeefe; }
+    /* hover underline animation */
+    .navbar a::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: -4px;
+      width: 0%;
+      height: 3px;
+      background: #31debe;
+      transition: width 0.3s ease-in-out;
+    }
+    .navbar a:hover::after { width: 100%; }
 
     /* big center title */
     .center-title {
@@ -203,11 +78,10 @@
   <!-- background video (muted so autoplay works) -->
   <video id="bg-video" autoplay muted loop playsinline>
     <source src="vid.mp4" type="video/mp4" />
-    <!-- If you prefer webm, add a fallback: <source src="vid.webm" type="video/webm" /> -->
   </video>
   <div class="overlay"></div>
 
-  <!-- fixed logo on top-left (links to the landing page) -->
+  <!-- fixed logo on top-left -->
   <div class="top-left-logo">
     <a href="index.html"><img src="logo.jpg" alt="ROCKFALL logo"></a>
   </div>
@@ -215,6 +89,8 @@
   <!-- navbar centered top -->
   <nav class="navbar">
     <a href="dashboard.html#dashboard">Dashboard</a>
+    <!-- NEW LINK AFTER DASHBOARD -->
+    <a href="form.html">Form</a>
     <a href="dashboard.html#analytics">Analytics</a>
     <a href="dashboard.html#reports">Reports</a>
     <a href="dashboard.html#settings">Settings</a>
@@ -223,7 +99,7 @@
   <!-- main heading -->
   <div class="center-title">AI Based Rockfall Prediction</div>
 
-  <!-- live alerts swipe button (opens dashboard alerts) -->
+  <!-- live alerts swipe button -->
   <div class="live-alerts-btn" id="liveAlertsBtn" onclick="location.href='dashboard.html#alerts'">Live Alerts</div>
 
   <script>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Rockfall Risk Prediction</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<link rel="stylesheet" href="style.css">
+<body class="bg-gradient-to-r from-blue-100 via-white to-green-100 min-h-screen flex items-center justify-center">
+  <div class="bg-white shadow-2xl rounded-3xl p-10 w-full max-w-2xl">
+    <h1 class="text-3xl font-bold text-center text-indigo-600 mb-8">Rockfall Risk Prediction</h1>
+
+    <!-- Tabs -->
+    <div class="flex justify-center mb-6">
+      <button id="manualTab" class="px-6 py-2 bg-indigo-600 text-white rounded-l-xl">Manual Input</button>
+      <button id="csvTab" class="px-6 py-2 bg-gray-300 rounded-r-xl">CSV Upload</button>
+    </div>
+
+    <!-- Manual Input Form -->
+    <form id="riskForm" class="space-y-4">
+      <input type="number" step="0.1" name="rainfall_mm" placeholder="Rainfall (mm)" class="input-field" required>
+      <input type="number" step="0.1" name="temperature_C" placeholder="Temperature (°C)" class="input-field" required>
+      <input type="number" step="0.01" name="vibration_m_s2" placeholder="Vibration (m/s²)" class="input-field" required>
+      <input type="number" step="0.01" name="displacement_cm" placeholder="Displacement (cm)" class="input-field" required>
+      <input type="number" step="0.0001" name="strain" placeholder="Strain" class="input-field" required>
+      <input type="number" step="0.1" name="pore_pressure_kPa" placeholder="Pore Pressure (kPa)" class="input-field" required>
+      <input type="number" step="0.01" name="slope" placeholder="Slope" class="input-field" required>
+      <input type="number" step="0.01" name="curvature" placeholder="Curvature" class="input-field" required>
+      <input type="number" step="0.01" name="aspect" placeholder="Aspect" class="input-field" required>
+
+      <button type="submit" class="btn-primary w-full py-3 rounded-xl font-bold text-white text-lg hover:scale-105 transition-transform">Predict Risk</button>
+    </form>
+
+    <!-- CSV Upload Form -->
+    <form id="csvForm" class="hidden space-y-4 mt-4">
+      <input type="file" id="csvFile" accept=".csv" class="w-full border p-2 rounded" required>
+      <button type="submit" class="btn-primary w-full py-3 rounded-xl font-bold text-white text-lg hover:scale-105 transition-transform">Upload & Predict</button>
+    </form>
+
+    <div id="result" class="mt-6 text-center text-xl font-semibold text-indigo-700"></div>
+  </div>
+
+  <script>
+    const manualTab = document.getElementById("manualTab");
+    const csvTab = document.getElementById("csvTab");
+    const riskForm = document.getElementById("riskForm");
+    const csvForm = document.getElementById("csvForm");
+    const resultDiv = document.getElementById("result");
+
+    // Switch Tabs
+    manualTab.addEventListener("click", () => {
+      riskForm.classList.remove("hidden");
+      csvForm.classList.add("hidden");
+      manualTab.classList.add("bg-indigo-600","text-white");
+      csvTab.classList.remove("bg-indigo-600","text-white");
+      csvTab.classList.add("bg-gray-300");
+    });
+
+    csvTab.addEventListener("click", () => {
+      csvForm.classList.remove("hidden");
+      riskForm.classList.add("hidden");
+      csvTab.classList.add("bg-indigo-600","text-white");
+      manualTab.classList.remove("bg-indigo-600","text-white");
+      manualTab.classList.add("bg-gray-300");
+    });
+
+    // Manual Prediction
+    riskForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(riskForm);
+      const data = {};
+      formData.forEach((value, key) => { data[key] = parseFloat(value); });
+
+      try {
+        const response = await fetch('/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (result.risk_score !== undefined) {
+          let score = parseFloat(result.risk_score);
+          let colorClass = '';
+          if (score <= 0.3) colorClass = 'text-green-600';
+          else if (score <= 0.7) colorClass = 'text-yellow-600';
+          else colorClass = 'text-red-600';
+
+          resultDiv.innerHTML = `<span class="${colorClass} font-bold text-2xl">Predicted Risk Score: ${score.toFixed(2)}</span>`;
+        } else {
+          resultDiv.innerText = `Error: ${result.error}`;
+          resultDiv.className = 'text-red-600 font-bold';
+        }
+      } catch (err) {
+        resultDiv.innerText = "Server error or backend not running!";
+        resultDiv.className = 'text-red-600 font-bold';
+      }
+    });
+
+    // CSV Upload
+    csvForm.addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const fileInput = document.getElementById("csvFile");
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+
+      try {
+        const response = await fetch("/upload_csv", {
+          method: "POST",
+          body: formData
+        });
+
+        const result = await response.json();
+        resultDiv.innerHTML = "<pre class='text-left bg-gray-100 p-3 rounded'>" + JSON.stringify(result, null, 2) + "</pre>";
+      } catch (error) {
+        resultDiv.innerHTML = "Error uploading file!";
+      }
+    });
+  </script>
+</body>
+</html>
