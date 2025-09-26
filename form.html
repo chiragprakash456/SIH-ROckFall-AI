@@ -6,10 +6,61 @@
   <title>AI Rockfall Risk Prediction</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .bg-video {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      min-width: 100%;
+      min-height: 100%;
+      z-index: -1;
+      object-fit: cover;
+    }
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.4);
+      z-index: -1;
+    }
+    /* Predict Risk button style */
+    .predict-btn {
+      background-color: #4f46e5; /* indigo-600 */
+      color: white;
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-weight: bold;
+      transition: all 0.3s ease-in-out;
+      display: inline-block;
+      text-align: center;
+      align-items: center;
+      
+    }
+    .predict-btn:hover {
+      background-color: #4338ca; /* darker indigo */
+      transform: scale(1.08) rotate(-1deg);
+      box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
+    }
+  </style>
 </head>
-<link rel="stylesheet" href="style.css">
-<body class="bg-gradient-to-r from-blue-100 via-white to-green-100 min-h-screen flex items-center justify-center">
-  <div class="bg-white shadow-2xl rounded-3xl p-10 w-full max-w-2xl">
+<body class="min-h-screen flex items-center justify-center relative">
+
+  <!-- Background Video -->
+  <video autoplay muted loop playsinline class="bg-video">
+    <source src="vid2.mp4" type="video/mp4">
+    Your browser does not support HTML5 video.
+  </video>
+  <div class="overlay"></div>
+
+  <!-- Logo -->
+  <div class="absolute top-4 left-6 z-20">
+   <a href ="dashboard.html"> <img src="logo.jpg" alt="Logo" class="w-20 h-auto rounded-lg shadow-lg"> </a>
+  </div>
+
+  <!-- Form Container -->
+  <div class="bg-white/80 backdrop-blur-md shadow-2xl rounded-3xl p-10 w-full max-w-2xl relative z-10">
     <h1 class="text-3xl font-bold text-center text-indigo-600 mb-8">Rockfall Risk Prediction</h1>
 
     <!-- Tabs -->
@@ -29,14 +80,24 @@
       <input type="number" step="0.01" name="slope" placeholder="Slope" class="input-field" required>
       <input type="number" step="0.01" name="curvature" placeholder="Curvature" class="input-field" required>
       <input type="number" step="0.01" name="aspect" placeholder="Aspect" class="input-field" required>
+      
+      <!-- Centered button -->
+<div class="flex justify-center mt-4">
+  <button type="submit" class="predict-btn px-5 py-3 rounded-xl font-bold text-white text-lg hover:scale-105 transition-transform">
+    Predict Risk
+  </button>
+</div>
 
-      <button type="submit" class="btn-primary w-full py-3 rounded-xl font-bold text-white text-lg hover:scale-105 transition-transform">Predict Risk</button>
     </form>
 
     <!-- CSV Upload Form -->
     <form id="csvForm" class="hidden space-y-4 mt-4">
       <input type="file" id="csvFile" accept=".csv" class="w-full border p-2 rounded" required>
-      <button type="submit" class="btn-primary w-full py-3 rounded-xl font-bold text-white text-lg hover:scale-105 transition-transform">Upload & Predict</button>
+      <div class="flex justify-center mt-4">
+  <button type="submit" class="predict-btn px-5 py-3 rounded-xl font-bold text-white text-lg hover:scale-105 transition-transform">
+    Upload and Predict
+  </button>
+</div>
     </form>
 
     <div id="result" class="mt-6 text-center text-xl font-semibold text-indigo-700"></div>

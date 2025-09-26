@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - R.O.C.K.S. Dashboard</title>
+    <style>
+        /* --- Google Font & Font Awesome Icons --- */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
+        @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css');
+
+        /* --- Global Styles & Variables (Copied from index.html for consistency) --- */
+        :root {
+            --bg-dark: #1a202c;
+            --bg-medium: #2d3748;
+            --bg-light: #4a5568;
+            --text-primary: #e2e8f0;
+            --text-secondary: #a0aec0;
+            --accent-blue: #3182ce;
+            --accent-green: #48bb78;
+            --accent-purple: #9f7aea;
+        }
+
+        /* Light Theme */
+        body.light-theme {
+            --bg-dark: #f0f2f5;
+            --bg-medium: #ffffff;
+            --bg-light: #e2e8f0;
+            --text-primary: #2d3748;
+            --text-secondary: #4a5568;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- VIDEO BACKGROUND & OVERLAY --- */
+        #video-background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; overflow: hidden; }
+        #video-background video { min-width: 100%; min-height: 100%; width: auto; height: auto; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        #video-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(26, 32, 44, 0.7); z-index: -1; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- Main Layout --- */
+        .container { display: flex; flex-direction: column; width: 100%; flex-grow: 1; }
+        
+        /* --- TOP NAVIGATION BAR --- */
+        .top-nav {
+            width: 100%; padding: 10px 0; display: flex; justify-content: center; align-items: center;
+            background-color: rgba(45, 55, 72, 0.8); backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--bg-light); position: relative; z-index: 10;
+        }
+        .top-nav nav { display: flex; gap: 15px; }
+        .top-nav nav a { display: flex; align-items: center; color: var(--text-secondary); text-decoration: none; padding: 10px 20px; border-radius: 8px; font-weight: 400; transition: background-color 0.3s, transform 0.2s ease; }
+        .top-nav nav a i { margin-right: 8px; font-size: 1.1rem; }
+        .top-nav nav a.active, .top-nav nav a:hover { background-color: var(--accent-blue); color: var(--text-primary); }
+        .top-nav nav a:hover { transform: translateY(-2px); }
+
+        /* --- Main Content Area --- */
+        .main-content {
+            flex-grow: 1; padding: 25px; display: flex; flex-direction: column; overflow-y: auto;
+            animation: fadeInUp 0.5s ease-out forwards;
+        }
+        .main-header { font-size: 2rem; font-weight: 300; margin-bottom: 20px; }
+
+        /* --- Settings Page Styles --- */
+        .settings-container { background-color: var(--bg-medium); border-radius: 12px; padding: 30px; flex-grow: 1; }
+        .setting-group { margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid var(--bg-light); }
+        .setting-group:last-child { border-bottom: none; }
+        .setting-group label { display: block; font-weight: 700; margin-bottom: 10px; font-size: 1.1rem; }
+        .setting-item { display: flex; align-items: center; margin-bottom: 15px; }
+        .setting-item span { margin-right: 15px; min-width: 120px; color: var(--text-secondary); }
+        .setting-item select, .setting-item input[type="number"] { padding: 8px 12px; border: 1px solid var(--bg-light); border-radius: 6px; background-color: var(--bg-dark); color: var(--text-primary); font-size: 1rem; flex-grow: 1; max-width: 250px; }
+
+        /* Toggle Switch */
+        .switch { position: relative; display: inline-block; width: 40px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--bg-light); transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--accent-blue); }
+        input:checked + .slider:before { transform: translateX(16px); }
+
+        /* Color Picker */
+        .color-picker-group { display: flex; gap: 10px; }
+        .color-option { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: border-color 0.2s; }
+        .color-option.selected { border-color: var(--text-primary); }
+        .color-option.blue { background-color: var(--accent-blue); }
+        .color-option.green { background-color: var(--accent-green); }
+        .color-option.purple { background-color: var(--accent-purple); }
+    </style>
+</head>
+<body>
+    <div id="video-overlay"></div>
+    <div id="video-background">
+        <video autoplay muted loop src="https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-a-quarry-in-the-middle-of-the-42586-large.mp4"></video>
+    </div>
+
+    <div class="container">
+        <header class="top-nav">
+             <nav>
+                <a href="index.html" class="nav-link"><i class="fas fa-chart-line"></i> Dashboard</a>
+                <a href="#" class="nav-link"><i class="fas fa-chart-area"></i> Analytics</a>
+                <a href="#" class="nav-link"><i class="fas fa-file-alt"></i> Reports</a>
+                <a href="settings.html" class="nav-link active"><i class="fas fa-cog"></i> Settings</a>
+            </nav>
+        </header>
+
+        <main class="main-content">
+            <h1 class="main-header">System Settings</h1>
+            <div class="settings-container">
+                <div class="setting-group">
+                    <label>Appearance</label>
+                    <div class="setting-item"><span>Theme</span><label class="switch"><input type="checkbox" id="darkModeToggle"><span class="slider"></span></label></div>
+                    <div class="setting-item"><span>Accent Color</span><div class="color-picker-group"><div class="color-option blue" data-color="blue"></div><div class="color-option green" data-color="green"></div><div class="color-option purple" data-color="purple"></div></div></div>
+                </div>
+                <div class="setting-group">
+                    <label>Notifications</label>
+                    <div class="setting-item"><span>SMS Alerts</span><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+                    <div class="setting-item"><span>Email Alerts</span><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+                    <div class="setting-item"><span>Alert Threshold (%)</span><input type="number" value="70" min="0" max="100"></div>
+                </div>
+                 <div class="setting-group">
+                    <label>Data & Language</label>
+                    <div class="setting-item"><span>Data Refresh Rate</span><select><option>1 Minute</option><option selected>5 Minutes</option><option>15 Minutes</option></select></div>
+                    <div class="setting-item"><span>Language</span><select><option selected>English</option><option>Español</option></select></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const body = document.body;
+            const darkModeToggle = document.getElementById('darkModeToggle');
+            const accentColorOptions = document.querySelectorAll('.color-option');
+
+            // --- Function to apply saved theme ---
+            const applyTheme = (theme) => {
+                body.classList.toggle('light-theme', theme === 'light');
+                darkModeToggle.checked = theme === 'dark';
+            };
+
+            // --- Function to apply saved accent color ---
+            const applyAccentColor = (color) => {
+                document.documentElement.style.setProperty('--accent-blue', `var(--accent-${color})`);
+                accentColorOptions.forEach(opt => opt.classList.remove('selected'));
+                document.querySelector(`.color-option[data-color="${color}"]`).classList.add('selected');
+            };
+            
+            // --- Event listener for theme toggle ---
+            darkModeToggle.addEventListener('change', () => {
+                const newTheme = darkModeToggle.checked ? 'dark' : 'light';
+                localStorage.setItem('theme', newTheme);
+                applyTheme(newTheme);
+            });
+
+            // --- Event listener for accent color options ---
+            accentColorOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    const newColor = option.getAttribute('data-color');
+                    localStorage.setItem('accentColor', newColor);
+                    applyAccentColor(newColor);
+                });
+            });
+
+            // --- LOAD SAVED PREFERENCES ON STARTUP ---
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            const savedAccent = localStorage.getItem('accentColor') || 'blue';
+            
+            applyTheme(savedTheme);
+            applyAccentColor(savedAccent);
+        });
+    </script>
+</body>
+</html>
