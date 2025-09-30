@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="nlogo.png">
+    <title>Analytics Dashboard</title>
+    <style>
+        /* --- Basic Setup --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #ffffff;
+            overflow-x: hidden; /* Prevents horizontal scrollbar */
+        }
+
+        /* --- Video Background --- */
+        #video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            z-index: -2;
+        }
+
+        .video-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.3);
+            z-index: -1;
+        }
+
+        /* ✅ MODIFIED: Header is now fixed to the top */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px 40px;
+            background-color: transparent;
+            backdrop-filter: blur(8px);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-img {
+            height: 100px;
+            width: auto;
+            display: block; /* Removes extra space below the image */
+        }
+
+        /* ✅ MODIFIED: Title is now inside the header */
+        .header-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2.5rem;
+            font-weight: 600;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+        }
+
+        /* --- Main Content --- */
+        main {
+            padding: 40px;
+            /* ✅ ADDED: Padding to push content below the fixed header */
+            padding-top: 140px;
+        }
+        
+        .image-gallery {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        .image-card {
+            background-color: rgba(26, 32, 44, 0.7);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .image-card h2 {
+            margin-bottom: 15px;
+            font-weight: 500;
+            font-size: 1.5rem;
+        }
+
+        .image-card img {
+            max-width: 100%;
+            border-radius: 8px;
+            height: 350px;
+            width: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <video autoplay muted loop playsinline id="video-background">
+        <source src="vid2.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
+    <div class="video-overlay"></div>
+
+    <header>
+        <a href="index.html">
+            <img src="nlogo.png" alt="Company Logo" class="logo-img">
+        </a>
+        
+        <h1 class="header-title">Analytics</h1>
+    </header>
+
+    <main>
+        <div class="image-gallery">
+            
+            <div class="image-card">
+                <h2>Drone Imagery</h2>
+                <img src="satellite.png" alt="Drone imagery of the mine site">
+            </div>
+
+            <div class="image-card">
+                <h2>DEM Risk Map</h2>
+                <img src="xgbooster.png" alt="DEM Risk Map showing potential rockfall areas">
+            </div>
+
+        </div>
+    </main>
+
+</body>
+</html>

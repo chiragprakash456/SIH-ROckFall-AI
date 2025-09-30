@@ -5,96 +5,148 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>R.O.C.K.S. - Rockfall Prediction Dashboard</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700;900&display.swap');
     @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css');
 
     :root{
       --bg-dark:#1a202c; --bg-medium:#2d3748; --bg-light:#4a5568;
       --text-primary:#e2e8f0; --text-secondary:#a0aec0;
       --accent-blue:#3182ce; --risk-green:#38a169; --risk-yellow:#d69e2e; --risk-red:#c53030;
-      --accent-green:#48bb78; --accent-purple:#9f7aea;
     }
-    body.light-theme {
-      --bg-dark: #f0f2f5; --bg-medium:#fff; --bg-light:#e2e8f0; --text-primary:#2d3748; --text-secondary:#4a5568;
-    }
-
+    
     *{ box-sizing:border-box; margin:0; padding:0; }
-    body{ font-family:'Roboto',sans-serif; background:var(--bg-dark); color:var(--text-primary);
-      display:flex; height:100vh; overflow:hidden; transition:background-color .3s, color .3s;
-    }
+    body{ font-family:'Roboto',sans-serif; background:var(--bg-dark); color:var(--text-primary); }
 
-    /* PRELOADER */
     #preloader{
       position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
-      z-index:9999; background:rgba(26,32,44,0.85); transition:opacity .5s, visibility .5s; overflow:hidden;
+      z-index:9999; background:rgba(26,32,44,0.95); transition:opacity .5s, visibility .5s;
     }
     #preloader.hidden{ opacity:0; visibility:hidden; }
-    #preloader img{ width:250px; height:auto; animation:pulse 1.5s infinite; margin-bottom:18px; }
-    #preloader .loading-text{ color:var(--text-secondary); font-size:1.1rem; }
-    @keyframes pulse{ 0%{transform:scale(1);opacity:.8}50%{transform:scale(1.05);opacity:1}100%{transform:scale(1);opacity:.8} }
+    #preloader img{ width:250px; animation:pulse 1.5s infinite; margin-bottom:18px; }
+    @keyframes pulse{ 0%{transform:scale(1)}50%{transform:scale(1.05)}100%{transform:scale(1)} }
 
-    /* LAYOUT */
-    .container{ display:flex; width:100%; opacity:0; visibility:hidden; transition:opacity .5s; flex-grow:1; height:100vh; }
+    .container{ display:flex; width:100%; opacity:0; visibility:hidden; transition:opacity .5s; max-width: 1920px; margin: 0 auto; }
     .container.visible{ opacity:1; visibility:visible; }
 
-    .sidebar{ width:240px; background:var(--bg-medium); padding:18px; display:flex; flex-direction:column; gap:8px; border-right:1px solid var(--bg-light); }
+    .sidebar, .info-panel {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+    }
+
+    .sidebar{ width:240px; background:var(--bg-medium); padding:18px; display:flex; flex-direction:column; border-right:1px solid var(--bg-light); }
     .sidebar .logo { margin-bottom:12px; }
-    .sidebar .logo img { width:160px; display:block; }
+    .sidebar .logo img { width:160px; }
     .sidebar nav a{ display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--text-secondary); padding:12px; border-radius:8px; font-weight:500; }
     .sidebar nav a i{ width:20px; text-align:center; }
     .sidebar nav a.active, .sidebar nav a:hover{ background:var(--accent-blue); color:var(--text-primary); transform: translateX(4px); transition:all .18s; }
-    .sidebar nav a[aria-current="page"]{ outline:2px solid rgba(255,255,255,.06); }
-
-    .main-content{ flex-grow:1; padding:22px; display:flex; flex-direction:column; overflow-y:auto; }
+    
+    .main-content{ width: calc(100% - 560px); padding:22px; }
     .main-header{ font-size:2rem; font-weight:300; margin-bottom:14px; }
 
-    .page-content{ display:none; flex-direction:column; flex-grow:1; opacity:0; transform:translateY(10px); transition:opacity .35s, transform .35s; }
+    .page-content{ display:none; flex-direction:column; opacity:0; transform:translateY(10px); transition:opacity .35s, transform .35s; }
     .page-content.active-page{ display:flex; opacity:1; transform:translateY(0); }
+    
+    /* ✅ MAP HEIGHT REDUCED */
+    .map-container{ 
+        height: 500px; background:var(--bg-medium); border-radius:12px; 
+        background-image:url('https://i.imgur.com/gKj8A4C.png'); background-size:cover; background-position:center; 
+        position: relative; overflow: hidden;
+    }
+    .map-zone {
+        position: absolute; width: 60px; height: 60px; background-color: rgba(255, 255, 255, 0.2);
+        border: 2px solid white; border-radius: 50%; cursor: pointer; display: flex; justify-content: center; align-items: center;
+        font-weight: 700; backdrop-filter: blur(2px); transition: transform 0.2s, border-color 0.3s;
+        animation: pulse-zone 2s infinite;
+    }
+    .map-zone:hover { transform: scale(1.1); }
+    .map-zone.selected { border-width: 4px; animation: none; }
+    .map-zone.risk-low { border-color: var(--risk-green); }
+    .map-zone.risk-medium { border-color: var(--risk-yellow); }
+    .map-zone.risk-high { border-color: var(--risk-red); }
+    @keyframes pulse-zone { 0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); } }
 
-    .map-container{ flex-grow:1; background:var(--bg-medium); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:2rem; color:var(--text-secondary); background-image:url('https://i.imgur.com/gKj8A4C.png'); background-size:cover; background-position:center; padding:20px; }
+    /* ✅ INFO PANEL MODIFIED FOR NEW POPUP */
+    .info-panel{ 
+        width:320px; background:var(--bg-medium); padding:18px; border-left:1px solid var(--bg-light); 
+        display: flex; flex-direction: column;
+    }
+    #info-panel-content-wrapper { flex-grow: 1; overflow-y: auto; }
 
-    .alerts-list{ display:flex; flex-direction:column; gap:12px; }
-    .alert-card{ background:var(--bg-light); padding:14px; border-radius:8px; border-left:5px solid; }
-    .alert-card.high{ border-color:var(--risk-red); }
-    .alert-card.medium{ border-color:var(--risk-yellow); }
-    .alert-card.low{ border-color:var(--risk-green); }
+    .info-panel h3{ font-weight:700; margin-bottom:14px; font-size: 1.4rem; }
+    .info-panel .risk-display { font-size: 2.5rem; font-weight: 900; margin-bottom: 10px; }
+    .info-panel .risk-low { color: var(--risk-green); }
+    .info-panel .risk-medium { color: var(--risk-yellow); }
+    .info-panel .risk-high { color: var(--risk-red); }
+    .info-panel .detail-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--bg-light); color: var(--text-secondary); }
+    .info-panel .detail-item span:last-child { color: var(--text-primary); font-weight: 500; }
 
-    .info-panel{ width:320px; background:var(--bg-medium); padding:18px; border-left:1px solid var(--bg-light); overflow:auto; }
-    .info-panel h3{ font-weight:700; margin-bottom:14px; }
+    .area-switcher { margin-bottom: 20px; }
+    .area-switcher label { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 8px; display: block; }
+    .area-switcher select {
+        width: 100%; padding: 8px; background-color: var(--bg-light); color: var(--text-primary);
+        border: 1px solid var(--bg-light); border-radius: 6px; font-size: 0.9rem;
+    }
+    .settings-container{ background:var(--bg-medium); border-radius:12px; padding:22px; margin-bottom: 20px; }
+    
+    /* ✅ NEW: AUTOMATED ALERT POPUP STYLES */
+    .auto-alert-popup {
+        background: var(--bg-light);
+        border-top: 4px solid var(--risk-red);
+        padding: 15px;
+        margin-top: 20px;
+        border-radius: 8px;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.4s ease, transform 0.4s ease;
+        visibility: hidden;
+    }
+    .auto-alert-popup.visible {
+        opacity: 1;
+        transform: translateY(0);
+        visibility: visible;
+        animation: highlight-alert 1.5s infinite ease-in-out;
+    }
+    .auto-alert-popup h4 {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--risk-red);
+        margin-bottom: 8px;
+        font-size: 1rem;
+    }
+    .auto-alert-popup p {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        line-height: 1.4;
+    }
+    .auto-alert-popup p strong { color: var(--text-primary); }
 
-    .settings-container{ background:var(--bg-medium); border-radius:12px; padding:22px; }
-    .setting-group{ margin-bottom:20px; padding-bottom:14px; border-bottom:1px solid var(--bg-light); }
-    .setting-item{ display:flex; align-items:center; gap:12px; margin-bottom:12px; }
-    .switch{ position:relative; display:inline-block; width:40px; height:24px; }
-    .switch input{ opacity:0; width:0; height:0; }
-    .slider{ position:absolute; inset:0; background:var(--bg-light); border-radius:24px; transition:.4s; }
-    .slider:before{ content:""; position:absolute; left:4px; bottom:4px; height:16px; width:16px; background:white; border-radius:50%; transition:.4s; }
-    input:checked + .slider{ background:var(--accent-blue); }
-    input:checked + .slider:before{ transform: translateX(16px); }
-
+    @keyframes highlight-alert {
+        0% { box-shadow: 0 0 5px rgba(197, 48, 48, 0); }
+        50% { box-shadow: 0 0 15px rgba(197, 48, 48, 0.7); }
+        100% { box-shadow: 0 0 5px rgba(197, 48, 48, 0); }
+    }
+    
     @media(max-width:900px){
-      .sidebar{ width:72px; padding:12px; }
-      .sidebar .logo img{ width:52px; }
+      .sidebar{ position: fixed; z-index: 100; }
       .info-panel{ display:none; }
+      .main-content { width: calc(100% - 72px); margin-left: 72px; }
     }
   </style>
-  <!-- ✅ Chart.js Library -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <!-- PRELOADER -->
   <div id="preloader">
     <img src="logo.jpg" alt="ROCKFALL logo">
-    <div class="loading-text">Loading R.O.C.K.S. System...</div>
   </div>
 
-  <!-- MAIN LAYOUT -->
   <div class="container" id="main-dashboard-container">
     <aside class="sidebar">
       <div class="logo"><a href="index.html"><img src="logo.jpg" alt="ROCKFALL logo"></a></div>
       <nav>
         <a href="#" class="nav-link" data-page="dashboard"><i class="fas fa-chart-line"></i><span>Dashboard</span></a>
-        <a href="#" class="nav-link" data-page="analytics"><i class="fas fa-chart-area"></i><span>Analytics</span></a>
+        <a href="anlytics.html" class="nav-link" data-page="analytics"><i class="fas fa-chart-area"></i><span>Analytics</span></a>
         <a href="#" class="nav-link" data-page="reports"><i class="fas fa-file-alt"></i><span>Reports</span></a>
         <a href="settings.html" class="nav-link" data-page="settings"><i class="fas fa-cog"></i><span>Settings</span></a>
         <a href="#" class="nav-link" data-page="alerts"><i class="fas fa-bell"></i><span>Alerts</span></a>
@@ -102,132 +154,158 @@
     </aside>
 
     <main class="main-content">
-      <!-- Dashboard -->
       <div id="dashboard-content" class="page-content">
-        <h1 class="main-header">Mine Stability Dashboard</h1>
-        <div class="map-container"><p>[ Interactive Risk Map ]</p></div>
-
-        <!-- ✅ Real-Time Graph -->
+        <h1 class="main-header" id="main-header">North Quarry Stability Dashboard</h1>
+        <div class="map-container">
+            <div class="map-zone" data-zone-id="A1" style="top: 20%; left: 30%;">A1</div>
+            <div class="map-zone" data-zone-id="A2" style="top: 45%; left: 15%;">A2</div>
+            <div class="map-zone" data-zone-id="B4" style="top: 35%; left: 60%;">B4</div>
+            <div class="map-zone" data-zone-id="C1" style="top: 65%; left: 45%;">C1</div>
+            <div class="map-zone" data-zone-id="C5" style="top: 70%; left: 75%;">C5</div>
+        </div>
         <div class="settings-container" style="margin-top:20px;">
           <h2 style="margin-bottom:12px;">Real-Time Sensor Data</h2>
           <canvas id="sensorChart" height="120"></canvas>
         </div>
+        <div class="settings-container"><h2>Historical Data</h2><p>Additional content area to demonstrate scrolling. This section could contain tables, past incident reports, or maintenance logs, causing the main content area to be taller than the viewport.</p></div>
+        <div class="settings-container"><h2>Maintenance Logs</h2><p>More content to make the page taller. In a real application, this might be a filterable list of all maintenance activities performed in the selected mine area, contributing to the overall page length and requiring the user to scroll.</p></div>
       </div>
-
-      <!-- Analytics -->
-      <div id="analytics-content" class="page-content">
-        <h1 class="main-header">Analytics & Trends</h1>
-        <div class="settings-container"><p style="color:var(--text-secondary)">Advanced analytics and trends go here.</p></div>
-      </div>
-
-      <!-- Reports -->
-      <div id="reports-content" class="page-content">
-        <h1 class="main-header">Generated Reports</h1>
-        <div class="settings-container"><p style="color:var(--text-secondary)">Report generation UI goes here.</p></div>
-      </div>
-
-      <!-- Settings -->
-      <div id="settings-content" class="page-content">
-        <h1 class="main-header">System Settings</h1>
-        <div class="settings-container">
-          <!-- existing settings kept same -->
-        </div>
-      </div>
-
-      <!-- Alerts -->
-      <div id="alerts-content" class="page-content">
-        <h1 class="main-header">Live Alerts</h1>
-        <div class="settings-container">
-          <div class="alerts-list">
-            <div class="alert-card high"><strong>Sector B-4</strong> — High Risk (85%) — Increased displacement detected. Evacuate personnel.</div>
-            <div class="alert-card medium"><strong>Sector C-1</strong> — Medium Risk (62%) — Heavy rainfall recorded. Monitor sensors.</div>
-            <div class="alert-card low"><strong>Sector A-2</strong> — Stable (15%) — All systems normal.</div>
-          </div>
-        </div>
-      </div>
+      <div id="analytics-content" class="page-content"> <h1 class="main-header">Analytics & Trends</h1> <div class="settings-container"><p>Analytics content goes here.</p></div> </div>
+      <div id="reports-content" class="page-content"> <h1 class="main-header">Generated Reports</h1> <div class="settings-container"><p>Report generation UI goes here.</p></div> </div>
+      <div id="settings-content" class="page-content"> <h1 class="main-header">System Settings</h1> <div class="settings-container"></div> </div>
+      <div id="alerts-content" class="page-content"> <h1 class="main-header">Live Alerts</h1> <div class="settings-container"><p>Alerts list goes here.</p></div> </div>
     </main>
 
-    <aside class="info-panel">
-      <h3>Live Alerts</h3>
-      <div class="alert-card high"><div style="display:flex;justify-content:space-between"><strong>Sector B-4</strong><span>85%</span></div><p style="color:var(--text-secondary);margin-top:6px">Increased displacement detected. Evacuate personnel.</p></div>
-      <div class="alert-card medium"><div style="display:flex;justify-content:space-between"><strong>Sector C-1</strong><span>62%</span></div><p style="color:var(--text-secondary);margin-top:6px">Heavy rainfall recorded. Monitor sensor data closely.</p></div>
-      <div class="alert-card low"><div style="display:flex;justify-content:space-between"><strong>Sector A-2</strong><span>15%</span></div><p style="color:var(--text-secondary);margin-top:6px">All systems normal. No action required.</p></div>
+    <aside class="info-panel" id="info-panel">
+      <div id="info-panel-content-wrapper">
+        <div class="area-switcher">
+            <label for="area-select">Mine Area</label>
+            <select id="area-select">
+                <option value="North Quarry">North Quarry</option>
+                <option value="East Pit">East Pit</option>
+                <option value="South Ridge">South Ridge</option>
+            </select>
+          </div>
+
+        <h3 id="info-panel-placeholder">Select a zone to view details</h3>
+        <div id="info-panel-content" style="display:none;">
+            <h3 id="info-panel-zone-name"></h3>
+            <div id="info-panel-risk" class="risk-display"></div>
+            <div class="detail-item"><span>Status</span><span id="info-panel-status"></span></div>
+            <div class="detail-item"><span>Recommendation</span><span id="info-panel-recommendation"></span></div>
+            <div class="detail-item"><span>Displacement</span><span id="info-panel-displacement"></span></div>
+            <div class="detail-item"><span>Pore Pressure</span><span id="info-panel-pressure"></span></div>
+        </div>
+      </div>
+
+      <div class="auto-alert-popup" id="auto-alert-popup">
+        <h4><i class="fas fa-tower-broadcast"></i> AUTOMATED ALERT</h4>
+        <p id="auto-alert-message"></p>
+      </div>
     </aside>
   </div>
-
+  
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const preloader = document.getElementById('preloader');
       const mainContainer = document.getElementById('main-dashboard-container');
       const navLinks = Array.from(document.querySelectorAll('.nav-link'));
       const pageContents = Array.from(document.querySelectorAll('.page-content'));
+      
+      function showPage(pageName){ navLinks.forEach(nav => { nav.classList.toggle('active', nav.getAttribute('data-page') === pageName); }); pageContents.forEach(pc => { pc.classList.toggle('active-page', pc.id === pageName + '-content'); }); }
+      navLinks.forEach(link => { link.addEventListener('click', (e) => { e.preventDefault(); showPage(link.getAttribute('data-page')); }); });
+      showPage('dashboard');
 
-      function showPage(pageName){
-        navLinks.forEach(nav => {
-          const isActive = nav.getAttribute('data-page') === pageName;
-          nav.classList.toggle('active', isActive);
-          nav.setAttribute('aria-current', isActive ? 'page' : 'false');
-        });
-        pageContents.forEach(pc => {
-          pc.classList.toggle('active-page', pc.id === pageName + '-content');
-        });
-      }
+      window.addEventListener('load', () => { setTimeout(()=> { preloader.classList.add('hidden'); mainContainer.classList.add('visible'); }, 650); });
 
-      navLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-          e.preventDefault();
-          const page = link.getAttribute('data-page');
-          window.location.hash = page;
-          showPage(page);
-        });
-      });
-
-      window.addEventListener('load', () => {
-        setTimeout(()=> {
-          preloader.classList.add('hidden');
-          preloader.addEventListener('transitionend', () => {
-            preloader.style.display = 'none';
-            mainContainer.classList.add('visible');
-            handleHashNavigation();
-          }, { once: true });
-        }, 650);
-      });
-
-      function handleHashNavigation(){
-        const hash = window.location.hash.substring(1) || 'dashboard';
-        const targetLink = document.querySelector(`.nav-link[data-page="${hash}"]`);
-        if (targetLink) targetLink.click();
-      }
-      window.addEventListener('hashchange', handleHashNavigation);
-
-      // ✅ Real-Time Sensor Graph
-      const ctx = document.getElementById('sensorChart').getContext('2d');
-      const sensorChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: [],
-          datasets: [
-            { label: 'Displacement (mm)', borderColor: '#3182ce', backgroundColor: 'rgba(49,130,206,0.2)', data: [], tension: 0.3 },
-            { label: 'Strain (%)', borderColor: '#48bb78', backgroundColor: 'rgba(72,187,120,0.2)', data: [], tension: 0.3 },
-            { label: 'Vibrations (Hz)', borderColor: '#c53030', backgroundColor: 'rgba(197,48,48,0.2)', data: [], tension: 0.3 }
-          ]
-        },
-        options: { responsive: true, animation: false, scales: { x: { title: { display: true, text: 'Time (s)' } }, y: { title: { display: true, text: 'Value' } } } }
-      });
-
-      let time = 0;
-      setInterval(() => {
-        if (sensorChart.data.labels.length > 20) {
-          sensorChart.data.labels.shift();
-          sensorChart.data.datasets.forEach(ds => ds.data.shift());
-        }
-        time += 1;
-        sensorChart.data.labels.push(time);
-        sensorChart.data.datasets[0].data.push(Math.random() * 10 + 5);
-        sensorChart.data.datasets[1].data.push(Math.random() * 5);
-        sensorChart.data.datasets[2].data.push(Math.random() * 20);
+      const areaSelect = document.getElementById('area-select');
+      const mainHeader = document.getElementById('main-header');
+      areaSelect.addEventListener('change', (e) => {
+        const selectedArea = e.target.value;
+        mainHeader.textContent = `${selectedArea} Stability Dashboard`;
+        sensorChart.data.labels = [];
+        sensorChart.data.datasets.forEach(ds => ds.data = []);
         sensorChart.update();
-      }, 2000);
+        time = 0;
+      });
+
+      // ✅ NEW: AUTOMATED ALERT POPUP LOGIC
+      const autoAlertPopup = document.getElementById('auto-alert-popup');
+      const autoAlertMessage = document.getElementById('auto-alert-message');
+
+      function showAutoAlertPopup(zoneData) {
+        autoAlertMessage.innerHTML = `Message sent to <strong>${zoneData.name} Supervision</strong>.<br>Suggestion: <strong>${zoneData.recommendation}</strong>`;
+        autoAlertPopup.classList.add('visible');
+      }
+
+      function hideAutoAlertPopup() {
+        autoAlertPopup.classList.remove('visible');
+      }
+
+      // MAP & INFO PANEL LOGIC (PRESERVED)
+      const zoneData = {
+          A1: { name: 'Sector A-1', risk: 15, status: 'Stable', recommendation: 'No action required.', displacement: '0.2mm', pressure: '5 kPa' },
+          A2: { name: 'Sector A-2', risk: 25, status: 'Stable', recommendation: 'Monitor conditions.', displacement: '0.4mm', pressure: '8 kPa' },
+          B4: { name: 'Sector B-4', risk: 85, status: 'High Risk', recommendation: 'Evacuate personnel.', displacement: '5.1mm', pressure: '32 kPa' },
+          C1: { name: 'Sector C-1', risk: 62, status: 'Medium Risk', recommendation: 'Increased monitoring.', displacement: '2.3mm', pressure: '25 kPa' },
+          C5: { name: 'Sector C-5', risk: 45, status: 'Low Risk', recommendation: 'Routine checks.', displacement: '1.1mm', pressure: '12 kPa' },
+      };
+      const mapZones = document.querySelectorAll('.map-zone');
+      const infoPanelPlaceholder = document.getElementById('info-panel-placeholder');
+      const infoPanelContent = document.getElementById('info-panel-content');
+      let selectedZoneId = null;
+      function getRiskInfo(riskValue) { if (riskValue > 75) return { level: 'high' }; if (riskValue > 50) return { level: 'medium' }; return { level: 'low' }; }
+      function updateInfoPanel(zoneId) {
+          const data = zoneData[zoneId];
+          infoPanelPlaceholder.style.display = 'none';
+          infoPanelContent.style.display = 'block';
+          document.getElementById('info-panel-zone-name').textContent = data.name;
+          const riskDisplay = document.getElementById('info-panel-risk');
+          riskDisplay.textContent = `${data.risk}%`;
+          riskDisplay.className = `risk-display risk-${getRiskInfo(data.risk).level}`;
+          document.getElementById('info-panel-status').textContent = data.status;
+          document.getElementById('info-panel-recommendation').textContent = data.recommendation;
+          document.getElementById('info-panel-displacement').textContent = data.displacement;
+          document.getElementById('info-panel-pressure').textContent = data.pressure;
+      }
+      function updateMap() { mapZones.forEach(zone => { const zoneId = zone.dataset.zoneId; const riskInfo = getRiskInfo(zoneData[zoneId].risk); zone.className = 'map-zone'; zone.classList.add(`risk-${riskInfo.level}`); if(zoneId === selectedZoneId) zone.classList.add('selected'); }); }
+      mapZones.forEach(zone => { zone.addEventListener('click', () => { selectedZoneId = zone.dataset.zoneId; updateInfoPanel(selectedZoneId); updateMap(); }); });
+
+      // ✅ LIVE DATA SIMULATION MODIFIED TO USE NEW POPUP
+      setInterval(() => {
+          const zoneIds = Object.keys(zoneData);
+          const randomZoneId = zoneIds[Math.floor(Math.random() * zoneIds.length)];
+          const currentRisk = zoneData[randomZoneId].risk;
+          const change = (Math.random() - 0.5) * 15;
+          let newRisk = Math.round(Math.max(5, Math.min(95, currentRisk + change)));
+          zoneData[randomZoneId].risk = newRisk;
+          
+          if(newRisk > 75) { zoneData[randomZoneId].status = 'High Risk'; zoneData[randomZoneId].recommendation = 'Evacuate personnel.'; }
+          else if (newRisk > 50) { zoneData[randomZoneId].status = 'Medium Risk'; zoneData[randomZoneId].recommendation = 'Increased monitoring.'; }
+          else { zoneData[randomZoneId].status = 'Stable'; zoneData[randomZoneId].recommendation = 'No action required.'; }
+          
+          // Check for any high-risk zones and display the popup
+          const highRiskZones = Object.keys(zoneData).filter(id => zoneData[id].risk > 75);
+
+          if (highRiskZones.length > 0) {
+              const alertZoneId = highRiskZones[0]; // Show alert for the first high-risk zone
+              showAutoAlertPopup(zoneData[alertZoneId]);
+          } else {
+              hideAutoAlertPopup();
+          }
+
+          updateMap();
+          if (randomZoneId === selectedZoneId) { updateInfoPanel(randomZoneId); }
+      }, 4000);
+      
+      updateMap();
+      mapZones[2].click();
+
+      // CHART.JS CONFIG (PRESERVED)
+      const ctx = document.getElementById('sensorChart').getContext('2d');
+      const sensorChart = new Chart(ctx, { type: 'line', data: { labels: [], datasets: [ { label: 'Displacement (mm)', borderColor: '#3182ce', backgroundColor: 'rgba(49,130,206,0.2)', data: [], tension: 0.3 }, { label: 'Strain (%)', borderColor: '#48bb78', backgroundColor: 'rgba(72,187,120,0.2)', data: [], tension: 0.3 }, { label: 'Vibrations (Hz)', borderColor: '#c53030', backgroundColor: 'rgba(197,48,48,0.2)', data: [], tension: 0.3 } ] }, options: { responsive: true, animation: false, scales: { x: { title: { display: true, text: 'Time (s)' } }, y: { title: { display: true, text: 'Value' } } } } });
+      let time = 0;
+      setInterval(() => { if (sensorChart.data.labels.length > 20) { sensorChart.data.labels.shift(); sensorChart.data.datasets.forEach(ds => ds.data.shift()); } time += 1; sensorChart.data.labels.push(time); sensorChart.data.datasets[0].data.push(Math.random() * 10 + 5); sensorChart.data.datasets[1].data.push(Math.random() * 5); sensorChart.data.datasets[2].data.push(Math.random() * 20); sensorChart.update(); }, 2000);
     });
   </script>
 </body>

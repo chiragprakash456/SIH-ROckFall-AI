@@ -16,13 +16,14 @@
       z-index: -1;
       object-fit: cover;
     }
+    /* ✅ MODIFIED: Overlay changed from white to black for better contrast */
     .overlay {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(255, 255, 255, 0.4);
+      background: rgba(0, 0, 0, 0.3);
       z-index: -1;
     }
     /* Predict Risk button style */
@@ -43,33 +44,39 @@
       transform: scale(1.08) rotate(-1deg);
       box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
     }
+    .input-field {
+        background-color: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: rgb(235, 223, 223);
+        width: 100%;
+        padding: 10px;
+        border-radius: 8px;
+    }
+    .input-field::placeholder {
+        color: rgba(220, 220, 220, 0.7);
+    }
   </style>
 </head>
 <body class="min-h-screen flex items-center justify-center relative">
 
-  <!-- Background Video -->
   <video autoplay muted loop playsinline class="bg-video">
     <source src="vid2.mp4" type="video/mp4">
     Your browser does not support HTML5 video.
   </video>
   <div class="overlay"></div>
 
-  <!-- Logo -->
   <div class="absolute top-4 left-6 z-20">
-   <a href ="dashboard.html"> <img src="logo.jpg" alt="Logo" class="w-20 h-auto rounded-lg shadow-lg"> </a>
+   <a href ="index.html"> <img src="nlogo.jpg" alt="Logo" class="w-20 h-auto rounded-lg shadow-lg"> </a>
   </div>
 
-  <!-- Form Container -->
-  <div class="bg-white/80 backdrop-blur-md shadow-2xl rounded-3xl p-10 w-full max-w-2xl relative z-10">
-    <h1 class="text-3xl font-bold text-center text-indigo-600 mb-8">Rockfall Risk Prediction</h1>
+  <div class="bg-black/30 backdrop-blur-md shadow-2xl rounded-3xl p-10 w-full max-w-2xl relative z-10">
+    <h1 class="text-3xl font-bold text-center text-indigo-400 mb-8">Rockfall Risk Prediction</h1>
 
-    <!-- Tabs -->
     <div class="flex justify-center mb-6">
       <button id="manualTab" class="px-6 py-2 bg-indigo-600 text-white rounded-l-xl">Manual Input</button>
-      <button id="csvTab" class="px-6 py-2 bg-gray-300 rounded-r-xl">CSV Upload</button>
+      <button id="csvTab" class="px-6 py-2 bg-gray-700 text-gray-300 rounded-r-xl">CSV Upload</button>
     </div>
 
-    <!-- Manual Input Form -->
     <form id="riskForm" class="space-y-4">
       <input type="number" step="0.1" name="rainfall_mm" placeholder="Rainfall (mm)" class="input-field" required>
       <input type="number" step="0.1" name="temperature_C" placeholder="Temperature (°C)" class="input-field" required>
@@ -81,8 +88,7 @@
       <input type="number" step="0.01" name="curvature" placeholder="Curvature" class="input-field" required>
       <input type="number" step="0.01" name="aspect" placeholder="Aspect" class="input-field" required>
       
-      <!-- Centered button -->
-<div class="flex justify-center mt-4">
+      <div class="flex justify-center mt-4">
   <button type="submit" class="predict-btn px-5 py-3 rounded-xl font-bold text-white text-lg hover:scale-105 transition-transform">
     Predict Risk
   </button>
@@ -90,7 +96,6 @@
 
     </form>
 
-    <!-- CSV Upload Form -->
     <form id="csvForm" class="hidden space-y-4 mt-4">
       <input type="file" id="csvFile" accept=".csv" class="w-full border p-2 rounded" required>
       <div class="flex justify-center mt-4">
@@ -100,7 +105,7 @@
 </div>
     </form>
 
-    <div id="result" class="mt-6 text-center text-xl font-semibold text-indigo-700"></div>
+    <div id="result" class="mt-6 text-center text-xl font-semibold text-indigo-300"></div>
   </div>
 
   <script>
@@ -115,16 +120,18 @@
       riskForm.classList.remove("hidden");
       csvForm.classList.add("hidden");
       manualTab.classList.add("bg-indigo-600","text-white");
+      manualTab.classList.remove("bg-gray-700","text-gray-300");
       csvTab.classList.remove("bg-indigo-600","text-white");
-      csvTab.classList.add("bg-gray-300");
+      csvTab.classList.add("bg-gray-700","text-gray-300");
     });
 
     csvTab.addEventListener("click", () => {
       csvForm.classList.remove("hidden");
       riskForm.classList.add("hidden");
       csvTab.classList.add("bg-indigo-600","text-white");
+      csvTab.classList.remove("bg-gray-700","text-gray-300");
       manualTab.classList.remove("bg-indigo-600","text-white");
-      manualTab.classList.add("bg-gray-300");
+      manualTab.classList.add("bg-gray-700","text-gray-300");
     });
 
     // Manual Prediction
@@ -146,18 +153,18 @@
         if (result.risk_score !== undefined) {
           let score = parseFloat(result.risk_score);
           let colorClass = '';
-          if (score <= 0.3) colorClass = 'text-green-600';
-          else if (score <= 0.7) colorClass = 'text-yellow-600';
-          else colorClass = 'text-red-600';
+          if (score <= 0.3) colorClass = 'text-green-400';
+          else if (score <= 0.7) colorClass = 'text-yellow-400';
+          else colorClass = 'text-red-400';
 
           resultDiv.innerHTML = `<span class="${colorClass} font-bold text-2xl">Predicted Risk Score: ${score.toFixed(2)}</span>`;
         } else {
           resultDiv.innerText = `Error: ${result.error}`;
-          resultDiv.className = 'text-red-600 font-bold';
+          resultDiv.className = 'text-red-400 font-bold';
         }
       } catch (err) {
         resultDiv.innerText = "Server error or backend not running!";
-        resultDiv.className = 'text-red-600 font-bold';
+        resultDiv.className = 'text-red-400 font-bold';
       }
     });
 
@@ -175,7 +182,7 @@
         });
 
         const result = await response.json();
-        resultDiv.innerHTML = "<pre class='text-left bg-gray-100 p-3 rounded'>" + JSON.stringify(result, null, 2) + "</pre>";
+        resultDiv.innerHTML = "<pre class='text-left bg-gray-800/50 p-3 rounded text-white'>" + JSON.stringify(result, null, 2) + "</pre>";
       } catch (error) {
         resultDiv.innerHTML = "Error uploading file!";
       }

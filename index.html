@@ -4,111 +4,218 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>AI Based Rockfall Prediction</title>
+  <link rel="icon" type="image/jpeg" href="logo.jpg">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700;900&display.swap');
 
-    html,body { height:100%; margin:0; font-family: 'Roboto', sans-serif; }
-    body { overflow:hidden; color:#fff; background:#000; }
+    :root {
+      /* Variables for mouse-tracking effects */
+      --mouse-x-rot: 0deg;
+      --mouse-y-rot: 0deg;
+      --mouse-x-pos: 50%;
+      --mouse-y-pos: 50%;
+    }
+    
+    html {
+        scroll-behavior: smooth;
+        background-color: transparent; 
+    }
 
-    /* video background */
+    body { 
+      margin: 0; 
+      font-family: 'Roboto', sans-serif; 
+      color: #fff;
+      background-color: transparent; 
+    }
+
     #bg-video {
-      position:fixed; inset:0; width:100%; height:100%;
-      object-fit:cover; z-index:-2;
+      position: fixed; 
+      inset: 0; 
+      width: 100%; 
+      height: 100%;
+      object-fit: cover; 
+      z-index: -2;
     }
+    
     .overlay {
-      position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:-1;
+      position: fixed; 
+      inset: 0;
+      background: radial-gradient(
+        circle at var(--mouse-x-pos) var(--mouse-y-pos),
+        rgba(0,0,0,0.2),
+        rgba(0,0,0,0.6)
+      );
+      z-index: -1;
+      transition: background 0.1s ease-out;
     }
 
-    /* logo top-left */
-    .top-left-logo {
-      position:fixed; top:14px; left:18px; z-index:2;
+    /* Fixed elements have a high z-index to stay on top */
+    .top-left-logo, .navbar, .live-alerts-btn {
+      position: fixed;
+      z-index: 9;
     }
-    .top-left-logo img { height:78px; display:block; }
 
-    /* navbar center top */
+    .top-left-logo { top: 2px; left: 2px; }
+    .top-left-logo img { height: 150px; display: block; }
+
     .navbar {
-      position:fixed; top:18px; left:50%; transform:translateX(-50%);
-      z-index:2; display:flex; gap:28px; align-items:center;
+      top: 18px; 
+      left: 50%; 
+      transform: translateX(-50%);
+      display: flex; 
+      gap: 28px; 
+      align-items: center;
+      background: rgba(0,0,0,0.2); 
+      padding: 8px 20px;
+      border-radius: 50px;
+      backdrop-filter: blur(5px);
     }
     .navbar a {
-      color:#fff; text-decoration:none; font-weight:600; font-size:1rem;
-      padding:6px 8px; border-radius:6px;
-      position: relative;
+      color: #fff; 
+      text-decoration: none; 
+      font-weight: 600; 
+      font-size: 1rem;
+      text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.7);
     }
-    /* hover underline animation */
-    .navbar a::after {
-      content: "";
-      position: absolute;
-      left: 0;
-      bottom: -4px;
-      width: 0%;
-      height: 3px;
-      background: #31debe;
-      transition: width 0.3s ease-in-out;
+    .navbar a:hover { color: #31debe; }
+    
+    /* Hero Section - The non-scrolling first view */
+    .hero {
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        perspective: 1000px; 
     }
-    .navbar a:hover::after { width: 100%; }
 
-    /* big center title */
     .center-title {
-      position: absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-      z-index:2; text-align:center;
-      font-size: clamp(28px, 4.5vw, 54px); font-weight:800; letter-spacing:0.6px;
+      font-size: clamp(32px, 5vw, 60px); 
+      font-weight: 900; 
+      letter-spacing: 0.8px;
+      text-shadow: 0px 5px 20px rgba(0,0,0,0.5);
+      transform: translateZ(50px) rotateY(var(--mouse-x-rot)) rotateX(var(--mouse-y-rot));
+      transition: transform 0.1s ease-out;
     }
 
-    /* Live Alerts swipe button - right edge vertical */
     .live-alerts-btn {
-      position:fixed; right:0; top:50%; transform:translateY(-50%) translateX(100%);
-      z-index:3; background:#c53030; color:#fff; padding:14px 12px;
-      border-radius:10px 0 0 10px; font-weight:700; cursor:pointer;
-      writing-mode:vertical-rl; text-orientation:upright;
-      transition: transform 0.5s cubic-bezier(.22,.9,.35,1);
+      right: 0; top: 50%; transform: translateY(-50%);
+      background: #c53030; padding: 14px 12px;
+      border-radius: 10px 0 0 10px; font-weight: 700; cursor: pointer;
+      writing-mode: vertical-rl; text-orientation: upright;
       box-shadow: 0 10px 20px rgba(0,0,0,0.35);
     }
-    .live-alerts-btn.visible { transform:translateY(-50%) translateX(0); }
-
-    /* small responsive tweaks */
-    @media (max-width:600px){
-      .navbar { gap:14px; top:12px; }
-      .top-left-logo img { height:40px; }
-      .live-alerts-btn { padding:10px; }
+    
+    /* Main Content Area - This is what scrolls */
+    .main-content, .site-footer {
+        position: relative; 
+        z-index: 1;
     }
+
+    .main-content { background-color: transparent; }
+    .site-footer { background-color: #000; }
+
+    .content-section {
+        padding: 80px 10%;
+        max-width: 900px;
+        margin: 0 auto;
+        border-bottom: 1px solid #333;
+        
+    }
+    .content-section h2 {
+        font-size: 2.5rem;
+        border-left: 4px solid #31debe;
+        padding-left: 15px;
+        
+    }
+    .content-section p { font-size: 1.1rem; line-height: 1.6; color: #ccc; }
+    
+    /* Standard Footer - Appears at the very end of the page */
+    .site-footer { text-align: center; padding: 40px 20px; }
+    .site-footer p { margin: 0 0 10px 0; color: #888; }
+    .site-footer a { color: #eee; text-decoration: none; margin: 0 10px; }
+    .site-footer a:hover { text-decoration: underline; }
+
+    @media (max-width:600px){
+      .navbar { gap: 14px; top: 12px; }
+      .top-left-logo img { height: 40px; }
+    }
+    .hero-subtitle {
+    font-weight: 300; /* Lighter font weight than the main title */
+    font-size: 1.2rem;
+    color: #e0e0e0;
+    margin-top: 15px;
+    max-width: 600px; /* Prevents the line from being too wide on large screens */
+    margin-left: auto;
+    margin-right: auto;
+    text-shadow: 0px 2px 10px rgba(0,0,0,0.7);
+    line-height: 1.5;
+}
   </style>
 </head>
 <body>
-  <!-- background video (muted so autoplay works) -->
+  
   <video id="bg-video" autoplay muted loop playsinline>
-    <source src="vid2.mp4" type="video/mp4" />
+    <source src="vid.mp4" type="video/mp4" />
   </video>
   <div class="overlay"></div>
 
-  <!-- fixed logo on top-left -->
   <div class="top-left-logo">
-    <a href="index.html"><img src="logo.jpg" alt="ROCKFALL logo"></a>
+    <a href="index.html"><img src="nlogo.png" alt="ROCKFALL logo"></a>
   </div>
 
-  <!-- navbar centered top -->
   <nav class="navbar">
     <a href="dashboard.html#dashboard">Dashboard</a>
-    <!-- NEW LINK AFTER DASHBOARD -->
-    <a href="form.html">Input</a>
-    <a href="dashboard.html#analytics">Analytics</a>
+    <a href="newform.html">Input</a>
+    <a href="anlytics.html">Analytics</a>
     <a href="dashboard.html#reports">Reports</a>
     <a href="settings.html">Settings</a>
   </nav>
 
-  <!-- main heading -->
-  <div class="center-title">AI Based Rockfall Prediction</div>
-
-  <!-- live alerts swipe button -->
   <div class="live-alerts-btn" id="liveAlertsBtn" onclick="location.href='dashboard.html#alerts'">Live Alerts</div>
 
+ <header class="hero">
+  <div> <h1 class="center-title">AI Based Rockfall Prediction</h1>
+    <p class="hero-subtitle">An AI-powered system that uses multi-source data to provide real-time rockfall predictions for open-pit mines.</p>
+  </div>
+</header>
+  
+  <main class="main-content">
+    <section class="content-section">
+      <h2>The Problem</h2>
+      <p>Rockfalls in open-pit mines pose a significant threat to personnel and equipment, resulting in injuries, operational delays, and financial loss. Traditional detection methods are often reactive and fail to provide predictive insights for proactive decision-making.</p>
+    </section>
+    <section class="content-section">
+      <h2>Our Solution</h2>
+      <p>We have developed a smart, AI-based system capable of predicting potential rockfall incidents. The system processes multi-source data inputs to identify patterns that precede rockfall events. Our user-friendly dashboard provides real-time risk maps and probability-based forecasts to mine planners.</p>
+    </section>
+  </main>
+  
+  <footer class="site-footer">
+      <p>&copy; 2025 Rockfall AI Prediction. All Rights Reserved.</p>
+      <a href="#">Privacy Policy</a> | <a href="#">Terms of Use</a>
+  </footer>
+
   <script>
-    // slide-in animation for the vertical button after short delay
-    window.addEventListener('DOMContentLoaded', () => {
-      setTimeout(()=> {
-        document.getElementById('liveAlertsBtn').classList.add('visible');
-      }, 600);
+    // 3D effect is scoped to the hero section for better performance
+    const hero = document.querySelector('.hero');
+    hero.addEventListener('mousemove', (e) => {
+        let rect = e.target.getBoundingClientRect();
+        let mouseX = (e.clientX - rect.left) / rect.width;
+        let mouseY = (e.clientY - rect.top) / rect.height;
+
+        const tiltX = (mouseY * 30) - 15;
+        const tiltY = (mouseX * 30) - 15;
+
+        // Apply 3D effect to title
+        document.documentElement.style.setProperty('--mouse-x-rot', `${tiltY}deg`);
+        document.documentElement.style.setProperty('--mouse-y-rot', `${-tiltX}deg`);
+        
+        // Apply spotlight effect to overlay
+        document.documentElement.style.setProperty('--mouse-x-pos', `${e.clientX}px`);
+        document.documentElement.style.setProperty('--mouse-y-pos', `${e.clientY}px`);
     });
   </script>
+
 </body>
 </html>
